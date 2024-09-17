@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { genSaltSync, hashSync } from 'bcryptjs';
+
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
@@ -14,6 +15,7 @@ export class UsersService {
     const hash = hashSync(password, salt);
     return hash;
   }
+
   async create(createUserDto: CreateUserDto) {
     const hashPassword = this.getHashPassword(createUserDto.password);
     let user = await this.userModel.create({
