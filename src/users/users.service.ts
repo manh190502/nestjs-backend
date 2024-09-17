@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { genSaltSync, hashSync } from 'bcryptjs';
 
@@ -30,15 +30,20 @@ export class UsersService {
     return `This action returns all users`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  findOne(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) return 'not found user';
+
+    return this.userModel.findById(id);
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(updateUserDto: UpdateUserDto) {
+    return await this.userModel.updateOne(
+      { _id: updateUserDto.id },
+      { ...updateUserDto },
+    );
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    return await this.userModel.deleteOne({ _id: id });
   }
 }
