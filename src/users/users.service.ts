@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -22,6 +22,15 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto, user: IUser) {
+    const isExist = await this.userModel.findOne({
+      email: createUserDto.email,
+    });
+
+    if (isExist) {
+      throw new BadRequestException(
+        `email ${createUserDto.email} đã tồn tại !`,
+      );
+    }
     const hashPassword = this.getHashPassword(createUserDto.password);
     let newUser = await this.userModel.create({
       name: createUserDto.name,
@@ -56,6 +65,7 @@ export class UsersService {
       .find(filter)
       .skip(offset)
       .limit(defaultLimit)
+      .select('-password')
       .sort(sort as any)
       .populate(population)
       .exec();

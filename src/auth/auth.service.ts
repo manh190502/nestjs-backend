@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from 'src/users/users.interface';
@@ -25,6 +25,11 @@ export class AuthService {
   async register(registerData: RegisterUserDto) {
     const hashPassword = await this.getHashPassword(registerData.password);
 
+    const isExist = await this.userModel.findOne({ email: registerData.email });
+
+    if (isExist) {
+      throw new BadRequestException(`email ${registerData.email} đã tồn tại !`);
+    }
     const newUser = await this.userModel.create({
       name: registerData.name,
       email: registerData.email,
