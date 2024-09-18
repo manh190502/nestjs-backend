@@ -6,6 +6,8 @@ import mongoose from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { compareSync, genSaltSync, hashSync } from 'bcryptjs';
 import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
+import { IUser } from './users.interface';
+import aqp from 'api-query-params';
 
 @Injectable()
 export class UsersService {
@@ -19,33 +21,77 @@ export class UsersService {
     return hash;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto, user: IUser) {
     const hashPassword = this.getHashPassword(createUserDto.password);
-    let user = await this.userModel.create({
+    let newUser = await this.userModel.create({
+      name: createUserDto.name,
       email: createUserDto.email,
       password: hashPassword,
-      name: createUserDto.name,
+      age: createUserDto.age,
+      gender: createUserDto.gender,
+      address: createUserDto.address,
+      role: createUserDto.role,
+      createdBy: {
+        _id: user._id,
+        email: user.email,
+      },
     });
-    return user;
+    return {
+      _id: newUser._id,
+      createdAt: newUser.createdAt,
+    };
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(currentPage, limit, queryString) {
+    const { filter, sort, population } = aqp(queryString);
+    delete filter.page;
+
+    let offset = (currentPage - 1) * limit;
+    let defaultLimit = limit ? limit : 10;
+
+    const totalItems = (await this.userModel.find(filter)).length;
+    const totalPages = Math.ceil(totalItems / defaultLimit);
+
+    const result = await this.userModel
+      .find(filter)
+      .skip(offset)
+      .limit(defaultLimit)
+      .sort(sort as any)
+      .populate(population)
+      .exec();
+
+    return {
+      meta: {
+        current: currentPage,
+        pageSize: limit,
+        pages: totalPages,
+        total: totalItems,
+      },
+      result,
+    };
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) return 'not found user';
 
-    return this.userModel.findById(id);
+    let user = await this.userModel.findById(id).select('-password');
+
+    return user;
   }
 
   findOneByUserName(username: string) {
     return this.userModel.findOne({ email: username });
   }
-  async update(updateUserDto: UpdateUserDto) {
+  async update(updateUserDto: UpdateUserDto, user: IUser) {
     return await this.userModel.updateOne(
       { _id: updateUserDto.id },
-      { ...updateUserDto },
+      {
+        ...updateUserDto,
+        updatedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      },
     );
   }
 
@@ -53,7 +99,16 @@ export class UsersService {
     return compareSync(password, hash); //true or false
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: IUser) {
+    await this.userModel.updateOne(
+      { _id: id },
+      {
+        deletedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      },
+    );
     return await this.userModel.softDelete({ _id: id });
   }
 }
