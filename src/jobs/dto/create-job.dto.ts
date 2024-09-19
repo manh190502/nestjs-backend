@@ -1,5 +1,8 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
+  IsBoolean,
+  IsDate,
   IsNotEmpty,
   IsNotEmptyObject,
   IsObject,
@@ -19,7 +22,8 @@ export class CreateJobDto {
   @IsNotEmpty({ message: 'Name không được để trống' })
   name: string;
 
-  @IsNotEmpty({ message: 'Name không được để trống' })
+  @IsArray()
+  @IsNotEmpty({ message: 'Skills không được để trống' })
   skills: string[];
 
   @IsNotEmptyObject()
@@ -39,12 +43,18 @@ export class CreateJobDto {
 
   @IsNotEmpty({ message: 'Level không được để trống' })
   level: string;
+
   @IsNotEmpty({ message: 'Start Date không được để trống' })
+  @Transform(({ value }) => new Date(value))
+  @IsDate({ message: 'Định dạng Date!' })
   startDate: Date;
 
+  @Transform(({ value }) => new Date(value))
+  @IsDate({ message: 'Định dạng Date!' })
   @IsNotEmpty({ message: 'End Date không được để trống' })
   endDate: Date;
 
-  // @IsNotEmpty({ message: 'Active? không được để trống' })
+  @IsNotEmpty({ message: 'Active? không được để trống' })
+  @IsBoolean({ message: 'Định dạng boolean' })
   isActive: boolean;
 }
