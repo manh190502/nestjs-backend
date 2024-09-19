@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsEmail,
-  isNotEmpty,
   IsNotEmpty,
   IsNotEmptyObject,
   IsObject,
