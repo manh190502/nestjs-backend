@@ -11,7 +11,7 @@ export class Job {
   @Prop()
   skills: string[];
 
-  @Prop({ types: Object })
+  @Prop({ type: Object })
   company: {
     _id: mongoose.Schema.Types.ObjectId;
     name: string;

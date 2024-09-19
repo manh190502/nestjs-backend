@@ -28,7 +28,7 @@ export class CreateJobDto {
   @Type(() => Company)
   company: Company;
 
-  @IsNotEmpty({ message: 'Location không được để trống' })
+  // @IsNotEmpty({ message: 'Location không được để trống' })
   location: string;
 
   @IsNotEmpty({ message: 'Salary không được để trống' })
@@ -45,6 +45,6 @@ export class CreateJobDto {
   @IsNotEmpty({ message: 'End Date không được để trống' })
   endDate: Date;
 
-  @IsNotEmpty({ message: 'Active? không được để trống' })
+  // @IsNotEmpty({ message: 'Active? không được để trống' })
   isActive: boolean;
 }
