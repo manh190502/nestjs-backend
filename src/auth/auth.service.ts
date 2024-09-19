@@ -105,4 +105,64 @@ export class AuthService {
 
     return refresh_token;
   };
+
+  processNewToken = async (refreshToken: string, res: Response) => {
+    try {
+      this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      });
+
+      let user = await this.usersService.findUserByToken(refreshToken);
+
+      if (user) {
+        //update refresh_token
+        const { _id, name, email, role } = user;
+        const payload = {
+          sub: 'refresh token',
+          iss: 'from server',
+          _id,
+          name,
+          email,
+          role,
+        };
+
+        const refresh_token = this.createRefreshToken(payload);
+
+        await this.usersService.updateUserToken(refresh_token, _id.toString());
+
+        res.clearCookie('refresh_token');
+
+        res.cookie('refresh_token', refresh_token, {
+          httpOnly: true,
+          maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')),
+        });
+
+        return {
+          access_token: this.jwtService.sign(payload),
+          user: {
+            _id,
+            name,
+            email,
+            role,
+          },
+        };
+      } else {
+        throw new BadRequestException(
+          'Refresh token không hợp lệ. Vui lòng đăng nhập lại!',
+        );
+      }
+    } catch (error) {
+      throw new BadRequestException(
+        'Refresh token không hợp lệ. Vui lòng đăng nhập lại!',
+      );
+    }
+  };
+
+  logout = async (user: IUser, res) => {
+    await this.usersService.updateUserToken('', user._id);
+
+    res.clearCookie('refresh_token');
+
+    return 'ok';
+  };
 }
