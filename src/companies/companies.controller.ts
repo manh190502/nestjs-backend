@@ -26,8 +26,8 @@ export class CompaniesController {
   @Get()
   @ResponseMessage('Fetch company with paginate')
   findAll(
-    @Query('page') currentPage: string,
-    @Query('limit') limit: string,
+    @Query('current') currentPage: string,
+    @Query('pageSize') limit: string,
     @Query() queryString: string,
   ) {
     return this.companiesService.findAll(+currentPage, +limit, queryString);
