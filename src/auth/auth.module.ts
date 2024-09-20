@@ -11,10 +11,16 @@ import { AuthController } from './auth.controller';
 import { UsersService } from 'src/users/users.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
+import { RolesService } from 'src/roles/roles.service';
+import { RolesModule } from 'src/roles/roles.module';
+import { Role, RoleSchema } from 'src/roles/schemas/role.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Role.name, schema: RoleSchema },
+    ]),
     UsersModule,
     PassportModule,
     JwtModule.registerAsync({
@@ -27,6 +33,7 @@ import { User, UserSchema } from 'src/users/schemas/user.schema';
       }),
       inject: [ConfigService],
     }),
+    RolesModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],

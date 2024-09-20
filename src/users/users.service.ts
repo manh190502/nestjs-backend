@@ -92,10 +92,10 @@ export class UsersService {
     return user;
   }
 
-  findOneByUserName(username: string) {
-    return this.userModel
+  async findOneByUserName(username: string) {
+    return await this.userModel
       .findOne({ email: username })
-      .populate({ path: 'role', select: { name: 1, permissions: 1 } });
+      .populate({ path: 'role', select: { name: 1 } });
   }
   async update(updateUserDto: UpdateUserDto, user: IUser) {
     return await this.userModel.updateOne(

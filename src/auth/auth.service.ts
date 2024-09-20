@@ -10,14 +10,19 @@ import { genSaltSync, hashSync } from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { Response } from 'express';
+import { Role, RoleDocument } from 'src/roles/schemas/role.schema';
+import { USER_ROLE } from 'src/databases/sample';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
+    @InjectModel(Role.name) private roleModel: SoftDeleteModel<RoleDocument>,
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private rolesService: RolesService,
   ) {}
 
   getHashPassword(password: string) {
@@ -27,13 +32,17 @@ export class AuthService {
   }
 
   async register(registerData: RegisterUserDto) {
-    const hashPassword = await this.getHashPassword(registerData.password);
-
     const isExist = await this.userModel.findOne({ email: registerData.email });
 
     if (isExist) {
       throw new BadRequestException(`email ${registerData.email} đã tồn tại !`);
     }
+
+    //fetch user role
+    const userRole = await this.roleModel.findOne({ name: USER_ROLE });
+
+    const hashPassword = await this.getHashPassword(registerData.password);
+
     const newUser = await this.userModel.create({
       name: registerData.name,
       email: registerData.email,
@@ -41,7 +50,7 @@ export class AuthService {
       age: registerData.age,
       gender: registerData.gender,
       address: registerData.address,
-      role: 'USER',
+      role: userRole?._id,
     });
 
     return {
@@ -58,7 +67,17 @@ export class AuthService {
         user.password,
       );
 
-      if (isValid === true) return user;
+      if (isValid === true) {
+        const userRole = user.role as unknown as { _id: string; name: string };
+        const temp = await this.rolesService.findOne(userRole._id);
+
+        const objUser = {
+          ...user.toObject(),
+          permissions: temp?.permissions ?? [],
+        };
+
+        return objUser;
+      }
     }
 
     return null;
@@ -92,6 +111,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        permissions: user.permissions,
       },
     };
   }
@@ -130,6 +150,10 @@ export class AuthService {
 
         await this.usersService.updateUserToken(refresh_token, _id.toString());
 
+        // fetch user role
+        const userRole = user.role as unknown as { _id: string; name: string };
+        const temp = await this.rolesService.findOne(userRole._id);
+
         res.clearCookie('refresh_token');
 
         res.cookie('refresh_token', refresh_token, {
@@ -144,6 +168,7 @@ export class AuthService {
             name,
             email,
             role,
+            permissions: temp?.permissions ?? [],
           },
         };
       } else {
