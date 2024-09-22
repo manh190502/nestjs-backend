@@ -115,9 +115,9 @@ export class UsersService {
   }
 
   async remove(id: string, user: IUser) {
-    const admin = await this.userModel.findById(id);
+    const foundUser = await this.userModel.findById(id);
 
-    if (admin.email === 'admin@gmail.com') {
+    if (foundUser && foundUser.email === 'admin@gmail.com') {
       throw new BadRequestException('Không thể xóa Admin');
     }
 
