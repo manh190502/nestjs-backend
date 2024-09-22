@@ -15,7 +15,11 @@ async function bootstrap() {
   //middleware (guard global)
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector));
-  app.useGlobalPipes(new ValidationPipe()); //validate data dto
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  ); //validate data dto
   app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
   app.useStaticAssets(join(__dirname, '..', 'public'));

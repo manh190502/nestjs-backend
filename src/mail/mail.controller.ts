@@ -9,6 +9,7 @@ import {
 } from 'src/subscribers/schemas/subscriber.schema';
 import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 import { Job, JobDocument } from 'src/jobs/schemas/job.schema';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller('mail')
 export class MailController {
@@ -23,6 +24,7 @@ export class MailController {
   @Get()
   @Public()
   @ResponseMessage('Test email')
+  @Cron('0 0 0 * * 0') // 0.00 am every Sunday
   async handleTestEmail() {
     const subscribers = await this.subscriberModel.find({});
 
